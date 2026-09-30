@@ -5,15 +5,20 @@ export async function middleware(request: NextRequest) {
   return await updateSession(request);
 }
 
+// Only the signed-in pages and /login need session handling. Public pages (landing, guide, architecture,
+// shared reports) and API routes (which authenticate themselves) never pay for an auth check here.
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - images/assets with extensions (svg, png, jpg, jpeg, etc.)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/login',
+    '/dashboard/:path*',
+    '/studio/:path*',
+    '/library/:path*',
+    '/ask/:path*',
+    '/upload/:path*',
+    '/compare/:path*',
+    '/reports/:path*',
+    '/assets/:path*',
+    '/workflow/:path*',
+    '/playbooks/:path*',
   ],
 };

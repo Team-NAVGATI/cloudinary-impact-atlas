@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Impact Atlas: system architecture",
+    "output": "system.architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "users",
+      "type": "external",
+      "label": "Field teams",
+      "sublabel": "phone or laptop",
+      "pos": [
+        20,
+        300
+      ],
+      "size": [
+        150,
+        64
+      ]
+    },
+    {
+      "id": "app",
+      "type": "frontend",
+      "label": "Next.js app",
+      "sublabel": "Studio, Library, Ask, Reports",
+      "pos": [
+        250,
+        300
+      ],
+      "size": [
+        170,
+        64
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "Route handlers",
+      "sublabel": "/api/*  session + RLS",
+      "pos": [
+        580,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "org-scoped"
+    },
+    {
+      "id": "ai",
+      "type": "backend",
+      "label": "AI layer",
+      "sublabel": "vision, embeddings, LLM",
+      "pos": [
+        580,
+        140
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "pipes",
+      "type": "backend",
+      "label": "Pipelines",
+      "sublabel": "analyze, compare, report",
+      "pos": [
+        580,
+        460
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "nvidia",
+      "type": "external",
+      "label": "NVIDIA NIM",
+      "sublabel": "Nemotron + Embed VL",
+      "pos": [
+        900,
+        140
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "tag": "5-key pool"
+    },
+    {
+      "id": "supabase",
+      "type": "database",
+      "label": "Supabase",
+      "sublabel": "Postgres, Auth, RLS",
+      "pos": [
+        900,
+        300
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "brand": "supabase"
+    },
+    {
+      "id": "cloudinary",
+      "type": "cloud",
+      "label": "Cloudinary",
+      "sublabel": "originals, AI Vision, transforms",
+      "pos": [
+        900,
+        460
+      ],
+      "size": [
+        160,
+        64
+      ],
+      "brand": "cloudinary"
+    },
+    {
+      "id": "meteo",
+      "type": "external",
+      "label": "Open-Meteo",
+      "sublabel": "forecast + GloFAS river flow",
+      "pos": [
+        580,
+        610
+      ],
+      "size": [
+        160,
+        64
+      ]
+    },
+    {
+      "id": "resend",
+      "type": "external",
+      "label": "Resend",
+      "sublabel": "email to officers",
+      "pos": [
+        900,
+        610
+      ],
+      "size": [
+        160,
+        64
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Vercel: Next.js server",
+      "wraps": [
+        "api",
+        "ai",
+        "pipes"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "users-app",
+      "from": "users",
+      "to": "app",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "app-api",
+      "from": "app",
+      "to": "api",
+      "label": "fetch + NDJSON stream"
+    },
+    {
+      "id": "api-db",
+      "from": "api",
+      "to": "supabase",
+      "label": "SQL under RLS"
+    },
+    {
+      "id": "api-ai",
+      "from": "api",
+      "to": "ai",
+      "label": "plan, embed, answer",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "ai-nvidia",
+      "from": "ai",
+      "to": "nvidia",
+      "label": "key-rotated calls"
+    },
+    {
+      "id": "api-pipes",
+      "from": "api",
+      "to": "pipes",
+      "label": "analyze / report",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pipes-cld",
+      "from": "pipes",
+      "to": "cloudinary",
+      "label": "sign, AI Vision, URLs"
+    },
+    {
+      "id": "app-cld",
+      "from": "app",
+      "to": "cloudinary",
+      "label": "direct signed upload",
+      "variant": "dashed"
+    },
+    {
+      "id": "pipes-meteo",
+      "from": "pipes",
+      "to": "meteo",
+      "label": "rain + river",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "pipes-resend",
+      "from": "pipes",
+      "to": "resend",
+      "label": "alert email",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Trust",
+      "items": [
+        "Every row is tenant-scoped by row-level security",
+        "API secret never reaches the browser",
+        "Answers are fact-checked against retrieved evidence"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Retrieval",
+      "items": [
+        "BM25 keywords + text meaning + image content",
+        "Fused with Reciprocal Rank Fusion",
+        "Vectors from one multimodal embedding model"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Traceability",
+      "items": [
+        "Originals stay untouched in Cloudinary",
+        "Public ID, version and ETag recorded",
+        "Each report image stores its exact transformation"
+      ]
+    }
+  ]
+}

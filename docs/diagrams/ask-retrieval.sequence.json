@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Ask: how a question becomes a cited, checked answer",
+    "output": "ask-retrieval.sequence.html",
+    "viewBox": [
+      1080,
+      860
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "Analyst",
+      "sublabel": "asks in plain words"
+    },
+    {
+      "id": "ask",
+      "type": "backend",
+      "label": "/api/ask",
+      "sublabel": "NDJSON stream"
+    },
+    {
+      "id": "llm",
+      "type": "backend",
+      "label": "Nemotron",
+      "sublabel": "plan, answer, judge"
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "Postgres",
+      "sublabel": "evidence + captions"
+    },
+    {
+      "id": "vec",
+      "type": "database",
+      "label": "Vector index",
+      "sublabel": "text + image vectors"
+    },
+    {
+      "id": "embed",
+      "type": "backend",
+      "label": "Embed VL",
+      "sublabel": "query vector"
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 250,
+      "label": "Plan"
+    },
+    {
+      "from": 262,
+      "to": 530,
+      "label": "Retrieve three ways"
+    },
+    {
+      "from": 542,
+      "to": 745,
+      "label": "Answer + check"
+    }
+  ],
+  "messages": [
+    {
+      "id": "q",
+      "from": "user",
+      "to": "ask",
+      "y": 172,
+      "label": "question",
+      "variant": "emphasis"
+    },
+    {
+      "id": "plan",
+      "from": "ask",
+      "to": "llm",
+      "y": 204,
+      "label": "plan filters + keywords",
+      "variant": "default"
+    },
+    {
+      "id": "plan-ok",
+      "from": "llm",
+      "to": "ask",
+      "y": 236,
+      "label": "plan (unsupported filters dropped)",
+      "variant": "return"
+    },
+    {
+      "id": "pool",
+      "from": "ask",
+      "to": "db",
+      "y": 292,
+      "label": "candidates after hard filters",
+      "variant": "default"
+    },
+    {
+      "id": "bm25",
+      "from": "db",
+      "to": "ask",
+      "y": 330,
+      "label": "captions + tags → BM25 ranks",
+      "variant": "return"
+    },
+    {
+      "id": "qvec",
+      "from": "ask",
+      "to": "embed",
+      "y": 372,
+      "label": "embed query",
+      "variant": "default"
+    },
+    {
+      "id": "qvec-ok",
+      "from": "embed",
+      "to": "ask",
+      "y": 410,
+      "label": "query vector",
+      "variant": "return"
+    },
+    {
+      "id": "dense",
+      "from": "ask",
+      "to": "vec",
+      "y": 452,
+      "label": "cosine: meaning + look",
+      "variant": "default"
+    },
+    {
+      "id": "fuse",
+      "from": "vec",
+      "to": "ask",
+      "y": 492,
+      "label": "ranks → RRF (k=60)",
+      "variant": "return"
+    },
+    {
+      "id": "answer",
+      "from": "ask",
+      "to": "llm",
+      "y": 578,
+      "label": "top 12 items, answer with [n]",
+      "variant": "emphasis"
+    },
+    {
+      "id": "answer-ok",
+      "from": "llm",
+      "to": "ask",
+      "y": 616,
+      "label": "answer + follow-ups",
+      "variant": "return"
+    },
+    {
+      "id": "show",
+      "from": "ask",
+      "to": "user",
+      "y": 654,
+      "label": "answer streams to screen",
+      "variant": "emphasis"
+    },
+    {
+      "id": "judge",
+      "from": "ask",
+      "to": "llm",
+      "y": 692,
+      "label": "judge each claim vs its source",
+      "variant": "security"
+    },
+    {
+      "id": "judge-ok",
+      "from": "llm",
+      "to": "user",
+      "y": 728,
+      "label": "supported / not supported badges",
+      "variant": "return"
+    }
+  ]
+}

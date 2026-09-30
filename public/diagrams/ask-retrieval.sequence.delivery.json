@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "1fd4ca43-410b-4198-9156-15381f2cc4c8",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "D:\\Current Projects\\cloudinary-impact-atlas\\docs\\diagrams\\ask-retrieval.sequence.json",
+  "output": "D:\\Current Projects\\cloudinary-impact-atlas\\public\\diagrams\\ask-retrieval.sequence.html",
+  "specification": {
+    "sha256": "204edd82549129bf07680f474732ffaa04f86e6db0866ea25d93b2f7d8b1c82b",
+    "bytes": 3567
+  },
+  "artifact": {
+    "sha256": "e368c8091f8de32514b9ad4985471f62b466a415f04b426ff890b61c2a068748",
+    "bytes": 758173
+  }
+}

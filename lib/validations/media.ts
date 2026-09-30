@@ -14,6 +14,12 @@ export const createMediaAssetSchema = z
         'cloudinary_url must originate from https://res.cloudinary.com/'
       ),
     resource_type: z.enum(['image', 'video']),
+    cloudinary_asset_id: z.string().max(64).nullable().optional(),
+    version: z.number().int().positive().nullable().optional(),
+    etag: z.string().max(64).nullable().optional(),
+    zone_id: z.string().uuid().nullable().optional(),
+    phase: z.enum(['BASELINE', 'BEFORE', 'DURING', 'AFTER']).optional(),
+    title: z.string().max(200).nullable().optional(),
     original_filename: z
       .string()
       .min(1, 'original_filename cannot be empty'),

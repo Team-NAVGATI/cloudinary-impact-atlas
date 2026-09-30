@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { Db } from '@/lib/auth';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { createMediaAssetSchema } from '@/lib/validations/media';
 
@@ -8,7 +9,7 @@ import { createMediaAssetSchema } from '@/lib/validations/media';
  */
 export async function POST(request: Request) {
   try {
-    const supabase = await createServerSupabaseClient();
+    const supabase = (await createServerSupabaseClient()) as unknown as Db;
 
     // 1. Require authentication
     const {
@@ -99,6 +100,13 @@ export async function POST(request: Request) {
         project_id: null,
         cloudinary_public_id: validData.cloudinary_public_id,
         cloudinary_url: validData.cloudinary_url,
+        cloudinary_asset_id: validData.cloudinary_asset_id ?? null,
+        version: validData.version ?? null,
+        etag: validData.etag ?? null,
+        zone_id: validData.zone_id ?? null,
+        phase: validData.phase ?? 'DURING',
+        title: validData.title ?? validData.original_filename,
+        source_name: 'Field upload',
         resource_type: validData.resource_type,
         original_filename: validData.original_filename,
         mime_type: validData.mime_type || null,
@@ -152,7 +160,7 @@ export async function POST(request: Request) {
  */
 export async function GET() {
   try {
-    const supabase = await createServerSupabaseClient();
+    const supabase = (await createServerSupabaseClient()) as unknown as Db;
 
     const {
       data: { user },

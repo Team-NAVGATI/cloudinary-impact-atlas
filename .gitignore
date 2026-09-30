@@ -32,3 +32,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local scratch
+/scratch
+
+# duplicate symlinked/copied skill folder for another agent; .agents is the source
+/.bob

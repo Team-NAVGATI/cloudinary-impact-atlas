@@ -1,0 +1,9 @@
+# Not needed to build or run the app (also keeps `vercel deploy` uploads small)
+scratch
+.agents
+.bob
+.claude
+docs
+data/*.log
+skills-lock.json
+tsconfig.tsbuildinfo

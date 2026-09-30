@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "9f399b92-d4e3-42f4-9f92-7fede8c3b42e",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "D:\\Current Projects\\cloudinary-impact-atlas\\docs\\diagrams\\system.architecture.json",
+  "output": "D:\\Current Projects\\cloudinary-impact-atlas\\public\\diagrams\\system.architecture.html",
+  "specification": {
+    "sha256": "e3d6943c3ce4c7d49194f15ad23971a02ff88d0c8c37caf28ce8a71512b7ce87",
+    "bytes": 5236
+  },
+  "artifact": {
+    "sha256": "6fb62d2a45476b78b290bd867a983f3d791dd77609deb454b097fb8cdfdc94e8",
+    "bytes": 768521
+  }
+}
