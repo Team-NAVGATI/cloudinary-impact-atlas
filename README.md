@@ -59,7 +59,7 @@ flowchart LR
   APP --> API[Route handlers<br/>session + RLS]
   API --> DB[(Supabase<br/>Postgres, Auth)]
   API --> AI[AI layer<br/>vision, embeddings, LLM]
-  AI --> NV[NVIDIA NIM<br/>5-key rotating pool]
+  AI --> NV[NVIDIA NIM]
   API --> PIPE[Pipelines<br/>analyze, compare, report]
   PIPE --> CLD
   PIPE --> WX[Open-Meteo<br/>forecast + GloFAS]
@@ -80,7 +80,7 @@ cp .env.example .env         # fill in Supabase, Cloudinary and NVIDIA keys
 
 ### Providers and fallbacks
 * **Image understanding:** Cloudinary AI Vision, then an NVIDIA Nemotron vision model, then rules over the source description (provisional). Order: `VISION_PROVIDERS`. Cloudinary's free AI Vision quota is 100,000 tokens (about 1,300 per photo with the four prompts); the app tracks it and hands over before it runs out.
-* **Text LLM:** NVIDIA through a key pool (`NVIDIA_API_KEY_1..N`): least-loaded key first, under `NVIDIA_RPM_PER_KEY` (default 34) per minute, 429 puts a key on cooldown, 401/403 marks it dead, 503 backs off, and retired or slow models are skipped for a while.
+* **Text LLM:** NVIDIA, with automatic retry and backoff on rate limits and a fallback to another model if one is slow or retired.
 * **Email:** Resend if `RESEND_API_KEY` is set; otherwise alerts are logged and a prepared link is shown.
 
 ## Deploy to Vercel
@@ -101,7 +101,6 @@ Checklist:
 2. Run `npm run ingest` locally once to load the sample evidence (it writes to your Cloudinary and Supabase, not to Vercel).
 3. In Vercel → Settings → Functions, pick the region closest to your Supabase project. Most pages make 2 to 4 sequential database calls, so region distance is the largest remaining latency.
 4. Long-running routes (`analyze`, `ask`, report generation) declare `maxDuration = 60`; check your plan's function limit.
-5. Note: the NVIDIA key rotation and rate windows live in each function instance's memory. That is safe (limits are conservative) but not shared across instances.
 
 ### Performance notes
 * `optimizePackageImports` for the icon library (its 3,000-module barrel was most of the compile time); Turbopack for `npm run dev`; `npm run build:fast` for a Turbopack production build (about 3x faster to build, ~10% larger client bundle; the default `npm run build` uses the stable webpack builder).
@@ -120,7 +119,7 @@ app/
   r/[token]/             private read-only report
 components/              studio-client, library-client, ask-client, evidence-map, workflow-map, report-view, landing/*
 lib/
-  ai/                    nvidia.ts (key pool), vision.ts, llm.ts
+  ai/                    nvidia.ts (client), vision.ts, llm.ts
   ask.ts, retrieval.ts   planning, hybrid retrieval, RRF, BM25, grounding check
   embeddings.ts          multimodal index (int8-quantised vectors)
   pipeline/, reports/    analyze, compare, evidence + risk reports

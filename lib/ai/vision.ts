@@ -117,25 +117,49 @@ function fromAnswers(
 }
 
 const MIN_TOKENS_LEFT = 3500;
-function quotaState(): { remaining: number | null } {
-  const g = globalThis as unknown as { __cldVisionQuota?: { remaining: number | null } };
-  return (g.__cldVisionQuota ??= { remaining: null });
+
+interface VisionAccount {
+  label: string;
+  cloud: string;
+  key: string;
+  secret: string;
+}
+interface AccountState {
+  remaining: number | null;
+  coolUntil: number;
 }
 
-async function viaCloudinary(asset: MediaAsset): Promise<VisionResult> {
-  const q = quotaState();
-  if (q.remaining !== null && q.remaining < MIN_TOKENS_LEFT) {
-    throw new Error(`Cloudinary AI Vision free quota nearly used up (${q.remaining} tokens left)`);
+export function visionAccounts(): VisionAccount[] {
+  const env = process.env;
+  const list: VisionAccount[] = [];
+  if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
+    list.push({ label: 'vision 1', cloud: env.CLOUDINARY_CLOUD_NAME, key: env.CLOUDINARY_API_KEY, secret: env.CLOUDINARY_API_SECRET });
   }
-  const cloud = process.env.CLOUDINARY_CLOUD_NAME;
-  const key = process.env.CLOUDINARY_API_KEY;
-  const secret = process.env.CLOUDINARY_API_SECRET;
-  if (!cloud || !key || !secret) throw new Error('Cloudinary credentials missing');
+  for (let i = 2; i <= 9; i++) {
+    const cloud = env[`CLOUDINARY_VISION_${i}_CLOUD_NAME`];
+    const key = env[`CLOUDINARY_VISION_${i}_API_KEY`];
+    const secret = env[`CLOUDINARY_VISION_${i}_API_SECRET`];
+    if (cloud && key && secret && !/^your-/i.test(cloud)) list.push({ label: `vision ${i}`, cloud, key, secret });
+  }
+  return list;
+}
 
-  const res = await fetch(`https://api.cloudinary.com/v2/analysis/${cloud}/analyze/ai_vision_general`, {
+function accountStates(): Map<string, AccountState> {
+  const g = globalThis as unknown as { __cldVisionAccounts?: Map<string, AccountState> };
+  return (g.__cldVisionAccounts ??= new Map());
+}
+
+/** Token balance as last reported by Cloudinary. */
+export function visionQuotaSummary() {
+  const st = accountStates();
+  return visionAccounts().map((a) => ({ account: a.label, cloud: a.cloud, remaining: st.get(a.cloud)?.remaining ?? null }));
+}
+
+async function callVision(acc: VisionAccount, asset: MediaAsset): Promise<VisionResult> {
+  const res = await fetch(`https://api.cloudinary.com/v2/analysis/${acc.cloud}/analyze/ai_vision_general`, {
     method: 'POST',
     headers: {
-      Authorization: 'Basic ' + Buffer.from(`${key}:${secret}`).toString('base64'),
+      Authorization: 'Basic ' + Buffer.from(`${acc.key}:${acc.secret}`).toString('base64'),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -145,16 +169,44 @@ async function viaCloudinary(asset: MediaAsset): Promise<VisionResult> {
     signal: AbortSignal.timeout(40_000),
   });
   const text = await res.text();
+  const state = (accountStates().get(acc.cloud) ?? { remaining: null, coolUntil: 0 });
+  accountStates().set(acc.cloud, state);
   if (!res.ok) {
-    if (res.status === 403) providerCooldown.set('cloudinary', Date.now() + 10 * 60_000);
-    throw new Error(`Cloudinary AI Vision ${res.status}: ${text.slice(0, 200)}`);
+    if ([403, 420, 429].includes(res.status)) state.coolUntil = Date.now() + (res.status === 429 ? 60_000 : 10 * 60_000);
+    throw new Error(`Cloudinary AI Vision ${acc.label} ${res.status}: ${text.slice(0, 160)}`);
   }
   const json = JSON.parse(text);
   const left = json?.limits?.addons_quota?.find?.((x: { type: string }) => x.type === 'ai_vision')?.remaining;
-  if (typeof left === 'number') q.remaining = left;
+  if (typeof left === 'number') state.remaining = left;
   const answers = extractAnswers(json, PROMPTS.length);
   if (!answers) throw new Error('Could not read Cloudinary AI Vision response shape');
-  return fromAnswers(answers, 'cloudinary-ai-vision', 'ai_vision_general', json);
+  const out = fromAnswers(answers, 'cloudinary-ai-vision', 'ai_vision_general', json);
+  return { ...out, model: 'ai_vision_general' };
+}
+
+async function viaCloudinary(asset: MediaAsset, attempts: string[]): Promise<VisionResult> {
+  const accounts = visionAccounts();
+  if (!accounts.length) throw new Error('Cloudinary credentials missing');
+  const st = accountStates();
+  let lastErr = 'not available';
+  for (const acc of accounts) {
+    const state = st.get(acc.cloud);
+    if (state && state.coolUntil > Date.now()) {
+      lastErr = `${acc.label} resting after a limit error`;
+      continue;
+    }
+    if (state && state.remaining !== null && state.remaining < MIN_TOKENS_LEFT) {
+      lastErr = `${acc.label} nearly used up (${state.remaining} tokens left)`;
+      continue;
+    }
+    try {
+      return await callVision(acc, asset);
+    } catch (e) {
+      lastErr = e instanceof Error ? e.message : String(e);
+      attempts.push(`cloudinary ${acc.label}: ${lastErr}`);
+    }
+  }
+  throw new Error(`Cloudinary AI Vision unavailable (${lastErr})`);
 }
 
 async function viaNvidia(asset: MediaAsset): Promise<VisionResult> {
@@ -268,7 +320,7 @@ export async function analyzeImage(asset: MediaAsset): Promise<{ result: VisionR
       continue;
     }
     try {
-      if (name === 'cloudinary') return { result: await viaCloudinary(asset), attempts };
+      if (name === 'cloudinary') return { result: await viaCloudinary(asset, attempts), attempts };
       if (name === 'nvidia') return { result: await viaNvidia(asset), attempts };
       if (name === 'heuristic') return { result: viaMetadata(asset), attempts };
     } catch (e) {

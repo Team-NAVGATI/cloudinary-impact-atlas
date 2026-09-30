@@ -91,7 +91,7 @@
         160,
         64
       ],
-      "tag": "5-key pool"
+      "tag": "NIM"
     },
     {
       "id": "supabase",
@@ -195,7 +195,7 @@
       "id": "ai-nvidia",
       "from": "ai",
       "to": "nvidia",
-      "label": "key-rotated calls"
+      "label": "model calls"
     },
     {
       "id": "api-pipes",

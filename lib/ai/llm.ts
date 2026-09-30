@@ -1,7 +1,7 @@
 import { isNvidiaConfigured, messageText, modelChain, nvidiaChatWithFallback, thinkingOff } from '@/lib/ai/nvidia';
 
 /**
- * Text LLM through the NVIDIA key pool. Returns null when no key works, so callers fall back to
+ * Text LLM through NVIDIA. Returns null when no key works, so callers fall back to
  * deterministic text instead of failing the request.
  */
 export interface LlmResult {

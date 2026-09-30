@@ -1,14 +1,5 @@
 /**
- * NVIDIA API client with a rotating key pool.
- *
- * Free NVIDIA keys allow ~40 requests/minute each. With several keys we spread calls across them:
- *   - each request goes to the key with the fewest calls in the last 60 s (a sliding window),
- *   - a key at its limit is skipped; if all are at their limit we wait for the earliest free slot,
- *   - a 429 puts that key on cooldown (Retry-After, default 30 s) and the call is retried on another key,
- *   - a 401/403 marks the key dead for 10 minutes,
- *   - timeouts and 5xx retry on a different key.
- * State lives on globalThis so it survives hot reloads. On serverless hosting each instance keeps its own
- * window, so the per-key limit is set slightly under 40 (NVIDIA_RPM_PER_KEY, default 34).
+ * NVIDIA API client: rate-limit aware requests with retry, backoff and model fallback.
  */
 
 const WINDOW_MS = 60_000;
@@ -111,7 +102,7 @@ type ChatResponse = { choices?: { message?: { content?: string | null } }[] };
 export async function nvidiaPost<T = ChatResponse>(path: string, payload: Record<string, unknown>, opts: NvidiaChatOptions = {}): Promise<T> {
   const base = (process.env.NVIDIA_MODEL_ENDPOINT || 'https://integrate.api.nvidia.com/v1').replace(/\/$/, '');
   const total = getPool().keys.length;
-  if (!total) throw new Error('No NVIDIA API key configured (set NVIDIA_API_KEY_1 ... NVIDIA_API_KEY_5)');
+  if (!total) throw new Error('No NVIDIA API key configured (set NVIDIA_API_KEY_1)');
 
   const attempts = opts.maxAttempts ?? Math.max(3, total);
   const excluded = new Set<string>();
