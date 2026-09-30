@@ -4,6 +4,18 @@
 
 Built for CodeFibonacci x Cloudinary (Problem 02: AI-powered impact and sustainability media platform).
 
+**Pitch deck:** [Impact-Atlas-Pitch.pptx](docs/Impact-Atlas-Pitch.pptx) ([PDF copy](docs/Impact-Atlas-Pitch.pdf)), 13 short slides with speaker notes.
+
+## Screenshots
+
+| | |
+| --- | --- |
+| ![Landing page](docs/screenshots/01-landing.jpg)<br>**Landing** | ![Studio](docs/screenshots/02-studio.jpg)<br>**Studio**: photo to evidence, live |
+| ![Library and evidence map](docs/screenshots/03-library-evidence-map.jpg)<br>**Library** with the evidence map | ![Ask](docs/screenshots/04-ask.jpg)<br>**Ask**: cited, fact-checked answers |
+| ![Flood-risk report](docs/screenshots/05-flood-risk-report.jpg)<br>**Report** with the six-part risk score | ![Workflow](docs/screenshots/06-workflow.jpg)<br>**Workflow** with the Chennai playbook |
+
+![System architecture](docs/screenshots/07-architecture.jpg)
+
 ## What you can do
 
 | Screen | What happens |
