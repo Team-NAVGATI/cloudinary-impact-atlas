@@ -71,6 +71,32 @@ cp .env.example .env         # fill in Supabase, Cloudinary and NVIDIA keys
 * **Text LLM:** NVIDIA through a key pool (`NVIDIA_API_KEY_1..N`): least-loaded key first, under `NVIDIA_RPM_PER_KEY` (default 34) per minute, 429 puts a key on cooldown, 401/403 marks it dead, 503 backs off, and retired or slow models are skipped for a while.
 * **Email:** Resend if `RESEND_API_KEY` is set; otherwise alerts are logged and a prepared link is shown.
 
+## Deploy to Vercel
+
+The repo is Vercel-ready: no server filesystem writes, no custom build steps, framework auto-detected. Import the GitHub repo and add these **Environment Variables** (Project Settings → Environment Variables):
+
+| Variable | Needed? | Notes |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | Required | Service-role key is server-only and used only for shared report links |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Required | Secret stays on the server; uploads are signed |
+| `NVIDIA_API_KEY_1` ... `_N` | Optional | Without any key the app still works: keyword (BM25) search, rule-based summaries, Cloudinary AI Vision for image reading |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Optional | Without it, "Send" logs the alert and gives a link to send yourself |
+| `DEMO_MODE`, `DEMO_EMAIL`, `DEMO_PASSWORD` | Optional | One-click demo sign-in on `/login`. Leave `DEMO_MODE` unset or `false` for a real deployment |
+| `NEXT_PUBLIC_APP_URL` | Optional | Otherwise emailed links use `VERCEL_PROJECT_PRODUCTION_URL` automatically |
+
+Checklist:
+1. Run all six SQL migrations in Supabase once (they are idempotent).
+2. Run `npm run ingest` locally once to load the sample evidence (it writes to your Cloudinary and Supabase, not to Vercel).
+3. In Vercel → Settings → Functions, pick the region closest to your Supabase project. Most pages make 2 to 4 sequential database calls, so region distance is the largest remaining latency.
+4. Long-running routes (`analyze`, `ask`, report generation) declare `maxDuration = 60`; check your plan's function limit.
+5. Note: the NVIDIA key rotation and rate windows live in each function instance's memory. That is safe (limits are conservative) but not shared across instances.
+
+### Performance notes
+* `optimizePackageImports` for the icon library (its 3,000-module barrel was most of the compile time); Turbopack for `npm run dev`; `npm run build:fast` for a Turbopack production build (about 3x faster to build, ~10% larger client bundle; the default `npm run build` uses the stable webpack builder).
+* Middleware runs only on signed-in routes and `/login`; public pages and API routes skip it. Identity uses `getClaims()` (local JWT verification with asymmetric keys) and is deduplicated per request with `React.cache`.
+* List queries use an explicit column list, never `select('*')`, so embedding vectors are not sent on every request.
+* The report renderer is a server component, so the Markdown parser is not shipped to browsers; animation libraries and the answer renderer are code-split and load only when needed.
+
 ## Project layout
 
 ```
