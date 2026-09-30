@@ -4,7 +4,16 @@
 
 Built for CodeFibonacci x Cloudinary (Problem 02: AI-powered impact and sustainability media platform).
 
-**Pitch deck:** [Impact-Atlas-Pitch.pptx](docs/Impact-Atlas-Pitch.pptx) ([PDF copy](docs/Impact-Atlas-Pitch.pdf)), 13 short slides with speaker notes.
+**Pitch deck:** [Impact-Atlas-Pitch.pptx][Impact-Atlas.pptx](https://github.com/user-attachments/files/32875200/Impact-Atlas.pptx)
+ ,
+
+https://github.com/user-attachments/assets/a52e7447-146b-4c94-9d42-05cf40d3319f
+
+
+
+
+
+ 13 short slides with speaker notes.
 
 ## Screenshots
 
